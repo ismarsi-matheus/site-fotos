@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Telão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<style>
+  /* O telão é sempre escuro: fica melhor em projetor e TV */
+  :root { color-scheme: dark; padding: 0; }
+  html, body { height: 100%; }
+  body { background: #170B1B; color: #FBEFF5; overflow: hidden; }
+
+  .tela {
+    height: 100%; display: grid; grid-template-columns: 1fr minmax(15rem, 24vw);
+    gap: 3vw; padding: 3vw;
+  }
+  .palco { position: relative; min-height: 0; display: grid; place-items: center; }
+  .palco .quadro {
+    position: absolute; padding: 1vmin 1vmin 0; max-width: 100%;
+    transition: transform 1s cubic-bezier(.2, .8, .2, 1), opacity 1s ease;
+    transform: rotate(var(--giro, 0deg));
+  }
+  .palco .quadro img { width: auto; height: auto; max-height: calc(100vh - 6vw - 7vmin); max-width: 100%; }
+  .palco .quadro figcaption { font-size: clamp(1rem, 2.2vmin, 1.8rem); padding: 1.2vmin .3vmin 1.6vmin; }
+  .palco .quadro.saindo { opacity: 0; transform: translateY(-5vh) rotate(var(--giro)) scale(.96); }
+  .palco .quadro.entrando { opacity: 0; transform: translateY(10vh) rotate(calc(var(--giro) - 7deg)) scale(.9); }
+  .selo-nova {
+    position: absolute; top: -1.4vmin; right: -1.4vmin; background: #FF5A8E; color: #170B1B;
+    font: 700 clamp(.8rem, 1.8vmin, 1.4rem)/1 var(--fonte); padding: .7vmin 1.4vmin; border-radius: 999px;
+    transform: rotate(6deg);
+  }
+
+  .lateral { display: flex; flex-direction: column; justify-content: center; gap: 2.5vmin; text-align: center; }
+  .lateral h1 { font-family: var(--fonte-titulo); font-weight: 400; margin: 0; font-size: clamp(2rem, 5.5vmin, 4.5rem); line-height: 1; text-wrap: balance; }
+  .qr { background: #fff; padding: 1.6vmin; border-radius: 1.5vmin; align-self: center; width: min(100%, 30vmin); }
+  .qr canvas, .qr img { width: 100% !important; height: auto !important; }
+  .lateral p { margin: 0; font-size: clamp(1rem, 2.4vmin, 1.8rem); line-height: 1.3; }
+  #contagem { color: #BFA5BA; font-size: clamp(.9rem, 2vmin, 1.4rem); }
+
+  .espera { text-align: center; max-width: 32rem; }
+  .espera strong { display: block; font-family: var(--fonte-titulo); font-weight: 400; font-size: clamp(2rem, 5vmin, 4rem); line-height: 1.05; margin-bottom: 1rem; }
+  .espera span { color: #BFA5BA; font-size: clamp(1rem, 2.4vmin, 1.6rem); }
+
+  .controles { position: fixed; top: 1rem; right: 1rem; display: flex; gap: .5rem; transition: opacity .4s; }
+  .controles .botao.secundario { color: #fff; box-shadow: inset 0 0 0 2px rgba(255,255,255,.3); background: rgba(23,11,27,.6); }
+  body.parado .controles { opacity: 0; pointer-events: none; }
+  body.parado { cursor: none; }
+
+  @media (max-aspect-ratio: 1/1) {
+    .tela { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+    .lateral { flex-direction: row; align-items: center; text-align: left; }
+    .qr { width: 22vmin; flex: none; }
+    .palco .quadro img { max-height: 60vh; }
+  }
+</style>
+</head>
+<body>
+<div class="tela">
+  <div class="palco" id="palco">
+    <div class="espera" id="espera">
+      <strong>As fotos vão aparecer aqui</strong>
+      <span>Aponte a câmera do celular para o código ao lado e mande a primeira.</span>
+    </div>
+  </div>
+  <aside class="lateral">
+    <h1 id="titulo"></h1>
+    <div class="qr" id="qr" aria-label="QR code para enviar fotos"></div>
+    <p>Aponte a câmera e mande as suas fotos</p>
+    <p id="contagem"></p>
+  </aside>
+</div>
+
+<div class="controles">
+  <a class="botao secundario" href="galeria.html">Galeria</a>
+  <button class="botao secundario" id="tela-cheia">Tela cheia</button>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="fotos.js"></script>
+<script>
+  const cfg = window.EVENTO;
+  document.title = 'Telão: ' + cfg.titulo;
+  document.getElementById('titulo').textContent = cfg.titulo;
+  if (window.QRCode) {
+    new QRCode(document.getElementById('qr'), {
+      text: Fotos.linkDoSite(), width: 512, height: 512,
+      colorDark: '#170B1B', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+
+  const palco = document.getElementById('palco');
+  const espera = document.getElementById('espera');
+  const contagem = document.getElementById('contagem');
+  const intervalo = cfg.segundosPorFotoNoTelao * 1000;
+  const vistas = new Set();
+  let fotos = [], novas = [], indice = 0, primeiraCarga = true, quadroAtual = null, ultimaTroca = 0;
+
+  async function atualizar() {
+    let lista;
+    try { lista = await Fotos.listar(); } catch (_) { return; }
+    for (const f of lista) {
+      if (!vistas.has(f.id)) {
+        vistas.add(f.id);
+        if (!primeiraCarga) novas.push(f);
+      }
+    }
+    fotos = lista;
+    primeiraCarga = false;
+    contagem.textContent = fotos.length === 0 ? '' : fotos.length === 1 ? '1 foto até agora' : `${fotos.length} fotos até agora`;
+    // A organização escondeu uma foto: ela sai da fila e, se estiver na tela, sai na hora
+    const ids = new Set(lista.map(f => f.id));
+    novas = novas.filter(f => ids.has(f.id));
+    if (quadroAtual && !ids.has(quadroAtual.dataset.id)) {
+      if (fotos.length || novas.length) return proxima();
+      quadroAtual.remove(); quadroAtual = null;
+      palco.append(espera);
+      return;
+    }
+    // Foto nova chegou: mostra logo, sem esperar o ciclo inteiro
+    if (!quadroAtual || (novas.length && Date.now() - ultimaTroca > 3000)) proxima();
+  }
+
+  function proxima() {
+    let foto, ehNova = false;
+    if (novas.length) { foto = novas.shift(); ehNova = true; }
+    else if (fotos.length) { indice = indice % fotos.length; foto = fotos[indice++]; }
+    else return;
+    mostrar(foto, ehNova);
+  }
+
+  function mostrar(foto, ehNova) {
+    const img = new Image();
+    img.onload = () => {
+      espera.remove();
+      const quadro = document.createElement('figure');
+      quadro.className = 'quadro entrando';
+      quadro.dataset.id = foto.id;
+      quadro.style.setProperty('--giro', (Math.random() * 6 - 3).toFixed(1) + 'deg');
+      img.alt = foto.autor ? `Foto enviada por ${foto.autor}` : 'Foto da festa';
+      const cap = document.createElement('figcaption');
+      cap.textContent = foto.autor ? `Enviada por ${foto.autor}` : ' ';
+      quadro.append(img, cap);
+      if (ehNova) {
+        const selo = document.createElement('span');
+        selo.className = 'selo-nova'; selo.textContent = 'Acabou de chegar';
+        quadro.append(selo);
+      }
+      palco.append(quadro);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        quadro.classList.remove('entrando');
+      }));
+      if (quadroAtual) {
+        const antigo = quadroAtual;
+        antigo.classList.add('saindo');
+        setTimeout(() => antigo.remove(), 1100);
+      }
+      quadroAtual = quadro;
+      ultimaTroca = Date.now();
+    };
+    img.src = foto.url;
+  }
+
+  setInterval(() => { if (Date.now() - ultimaTroca >= intervalo - 50) proxima(); }, 1000);
+  atualizar();
+  Fotos.aoMudar(atualizar, cfg.telaoBuscaFotosACada);
+
+  // Tela cheia e controles que somem quando o mouse fica parado
+  document.getElementById('tela-cheia').onclick = () => {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen?.();
+  };
+  let timerMouse;
+  function mexeu() {
+    document.body.classList.remove('parado');
+    clearTimeout(timerMouse);
+    timerMouse = setTimeout(() => document.body.classList.add('parado'), 3000);
+  }
+  ['mousemove', 'touchstart', 'keydown'].forEach(ev => document.addEventListener(ev, mexeu));
+  mexeu();
+</script>
+</body>
+</html>

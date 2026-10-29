@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fotos da festa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<style>
+  main { max-width: 34rem; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+
+  .cabeca { position: relative; text-align: center; padding-top: 1rem; }
+
+  /* Pilha de fotos atrás do título: o elemento marcante da página */
+  .pilha { position: relative; height: 150px; margin: 0 auto -8px; width: 220px; }
+  .pilha span {
+    position: absolute; left: 50%; top: 0; width: 120px; height: 140px;
+    margin-left: -60px; background: var(--papel); padding: 7px 7px 26px; border-radius: 3px;
+    box-shadow: 0 8px 22px rgba(42, 21, 48, .16);
+  }
+  .pilha span::after { content: ""; display: block; width: 100%; height: 100%; border-radius: 1px; }
+  .pilha span:nth-child(1) { transform: translateX(-46px) rotate(-11deg); }
+  .pilha span:nth-child(1)::after { background: #F5B33B; }
+  .pilha span:nth-child(2) { transform: translateX(44px) rotate(9deg); }
+  .pilha span:nth-child(2)::after { background: #6B3FA0; }
+  .pilha span:nth-child(3) { transform: translateY(-6px) rotate(-2deg); }
+  .pilha span:nth-child(3)::after { background: #E2366E; }
+
+  h1 {
+    position: relative; margin: 0;
+    font-family: var(--fonte-titulo); font-weight: 400;
+    font-size: clamp(3rem, 15vw, 4.6rem); line-height: .95; letter-spacing: -.01em;
+    text-wrap: balance;
+  }
+  .data { margin: .9rem 0 0; color: var(--suave); font-weight: 600; font-size: .95rem; }
+  .mensagem { margin: .6rem auto 0; max-width: 26rem; text-wrap: pretty; }
+
+  .envio { margin-top: 2rem; display: grid; gap: .75rem; }
+  .envio .botao.grande { min-height: 64px; font-size: 1.15rem; }
+  .oculto:focus-visible + label { outline: 3px solid var(--ouro); outline-offset: 3px; }
+
+  .campo-nome { margin-bottom: .5rem; display: grid; gap: .3rem; }
+  .campo-nome label { font-weight: 600; font-size: .95rem; }
+  .campo-nome input {
+    font: inherit; color: var(--tinta); background: var(--superficie);
+    border: 2px solid var(--borda); border-radius: 14px; padding: .75rem .9rem; min-height: 48px;
+  }
+  .campo-nome input:focus-visible { outline: none; border-color: var(--destaque); }
+  .campo-nome small { color: var(--suave); font-size: .85rem; }
+
+  .enviadas { margin-top: 2.5rem; }
+  .enviadas h2 { font-family: var(--fonte-titulo); font-weight: 400; font-size: 1.5rem; margin: 0; }
+  #resumo { margin: .5rem 0 1rem; font-weight: 600; }
+  #resumo:not(:empty) { background: var(--superficie); border-left: 4px solid var(--destaque); border-radius: 10px; padding: .7rem .9rem; }
+  #lista { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; }
+  #lista li {
+    position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--superficie);
+    animation: chegar .35s ease-out;
+  }
+  #lista img { width: 100%; height: 100%; object-fit: cover; }
+  #lista .estado {
+    position: absolute; inset: auto 0 0 0; padding: .3rem .4rem; font-size: .75rem; font-weight: 700;
+    color: #fff; background: rgba(42, 21, 48, .72); display: flex; align-items: center; gap: .3rem;
+  }
+  #lista li[data-estado="enviada"] .estado, #lista li[data-estado="no-telao"] .estado { background: rgba(21, 128, 61, .85); }
+  #lista li[data-estado="erro"] .estado { background: rgba(185, 28, 28, .9); }
+  #lista li[data-estado="preparando"] img, #lista li[data-estado="enviando"] img { opacity: .55; }
+  #lista button {
+    position: absolute; inset: 0; width: 100%; border: 0; background: transparent; cursor: pointer;
+  }
+  @keyframes chegar { from { transform: scale(.85); opacity: 0; } }
+
+  .erro-geral { color: #B91C1C; font-weight: 600; }
+  @media (prefers-color-scheme: dark) { .erro-geral { color: #FCA5A5; } }
+</style>
+</head>
+<body>
+<main>
+  <nav class="abas" aria-label="Páginas">
+    <a href="index.html" aria-current="page">Enviar fotos</a>
+    <a href="galeria.html">Álbum da festa</a>
+  </nav>
+
+  <header class="cabeca">
+    <div class="pilha" aria-hidden="true"><span></span><span></span><span></span></div>
+    <h1 id="titulo"></h1>
+    <p class="data" id="data"></p>
+    <p class="mensagem" id="mensagem"></p>
+  </header>
+
+  <section class="envio" aria-label="Enviar fotos">
+    <div class="campo-nome">
+      <label for="nome">Como você se chama?</label>
+      <input id="nome" type="text" autocomplete="given-name" maxlength="40" placeholder="Opcional">
+      <small>Seu nome aparece junto das suas fotos no telão.</small>
+    </div>
+
+    <input class="oculto" type="file" id="escolher" accept="image/*" multiple>
+    <label class="botao grande" for="escolher">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+      Escolher fotos da galeria
+    </label>
+
+    <input class="oculto" type="file" id="camera" accept="image/*" capture="environment">
+    <label class="botao secundario" for="camera">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+      Tirar uma foto agora
+    </label>
+  </section>
+
+  <section class="enviadas" id="secao-enviadas" hidden>
+    <h2>Enviadas por você</h2>
+    <p id="resumo" aria-live="polite"></p>
+    <ul id="lista"></ul>
+  </section>
+
+  <p class="aviso-demo" id="aviso-demo" hidden>
+    Modo demonstração: as fotos ficam guardadas só neste navegador. Abra o telão ou a galeria em outra aba para ver chegando.
+  </p>
+  <p class="organizacao">Organização: <a href="telao.html">Abrir telão</a> · <a href="qrcode.html">Imprimir QR code</a></p>
+</main>
+
+<script src="config.js"></script>
+<script src="fotos.js"></script>
+<script>
+  const cfg = window.EVENTO;
+  document.title = 'Fotos: ' + cfg.titulo;
+  document.getElementById('titulo').textContent = cfg.titulo;
+  document.getElementById('data').textContent = cfg.data;
+  document.getElementById('mensagem').textContent = cfg.mensagem;
+  if (Fotos.modo === 'demo') document.getElementById('aviso-demo').hidden = false;
+
+  const campoNome = document.getElementById('nome');
+  try { campoNome.value = localStorage.getItem('fotos-nome') || ''; } catch (_) {}
+  campoNome.addEventListener('change', () => {
+    try { localStorage.setItem('fotos-nome', campoNome.value.trim()); } catch (_) {}
+  });
+
+  const lista = document.getElementById('lista');
+  const resumo = document.getElementById('resumo');
+  const secao = document.getElementById('secao-enviadas');
+  const fila = [];
+  let processando = false, enviadas = 0, comErro = 0;
+
+  for (const id of ['escolher', 'camera']) {
+    const input = document.getElementById(id);
+    input.addEventListener('change', () => {
+      adicionar(Array.from(input.files));
+      input.value = '';
+    });
+  }
+
+  function adicionar(arquivos) {
+    for (const arquivo of arquivos) {
+      const ehImagem = arquivo.type.startsWith('image/') || /\.(heic|heif)$/i.test(arquivo.name);
+      if (!ehImagem) continue;
+      const item = { arquivo, pacote: null, el: criarItem(arquivo) };
+      fila.push(item);
+    }
+    secao.hidden = false;
+    atualizarResumo();
+    processar();
+  }
+
+  function criarItem(arquivo) {
+    const li = document.createElement('li');
+    const img = document.createElement('img');
+    img.alt = '';
+    img.src = URL.createObjectURL(arquivo);
+    const estado = document.createElement('span');
+    estado.className = 'estado';
+    li.append(img, estado);
+    lista.prepend(li);
+    definirEstado(li, 'fila', 'Na fila');
+    return li;
+  }
+
+  function definirEstado(li, estado, texto) {
+    li.dataset.estado = estado;
+    li.querySelector('.estado').textContent = texto;
+  }
+
+  async function processar() {
+    if (processando) return;
+    processando = true;
+    while (fila.length) await enviarItem(fila.shift());
+    processando = false;
+    atualizarResumo();
+  }
+
+  async function enviarItem(item) {
+    const li = item.el;
+    li.querySelector('button')?.remove();
+    try {
+      if (!item.pacote) {
+        definirEstado(li, 'preparando', 'Preparando…');
+        item.pacote = await Fotos.preparar(item.arquivo);
+        const img = li.querySelector('img');
+        URL.revokeObjectURL(img.src);
+        img.src = URL.createObjectURL(item.pacote.miniatura);
+      }
+      definirEstado(li, 'enviando', 'Enviando…');
+      // A versão do telão chega em segundos; o original (pesado) termina depois.
+      await Fotos.enviar(item.pacote, campoNome.value.trim(), versao => {
+        if (versao === 'telao') definirEstado(li, 'no-telao', '✓ No telão · salvando original');
+      });
+      definirEstado(li, 'enviada', '✓ Enviada');
+      enviadas++;
+      if (item.falhou) { comErro--; item.falhou = false; }
+    } catch (erro) {
+      console.error(erro);
+      definirEstado(li, 'erro', 'Toque para tentar de novo');
+      if (!item.falhou) { comErro++; item.falhou = true; }
+      const tentar = document.createElement('button');
+      tentar.setAttribute('aria-label', 'Tentar enviar esta foto de novo');
+      tentar.addEventListener('click', () => { fila.push(item); atualizarResumo(); processar(); });
+      li.append(tentar);
+    }
+    atualizarResumo();
+  }
+
+  function atualizarResumo() {
+    const pendentes = fila.length + (processando ? 1 : 0);
+    let texto = '';
+    if (enviadas === 1) texto = '1 foto enviada.';
+    else if (enviadas > 1) texto = `${enviadas} fotos enviadas.`;
+    if (pendentes > 0 && processando) texto += ` Enviando ${pendentes === 1 ? 'mais 1' : 'mais ' + pendentes}. Não feche esta página até terminar.`;
+    else if (enviadas > 0) texto = `Pronto! ${texto} ${enviadas === 1 ? 'Já está' : 'Já estão'} no telão. Quer mandar mais? É só tocar no botão de novo.`;
+    if (comErro > 0) texto += ` ${comErro === 1 ? '1 foto não foi enviada' : comErro + ' fotos não foram enviadas'}: confira a internet e toque nela para tentar de novo.`;
+    resumo.textContent = texto.trim();
+  }
+
+  window.addEventListener('beforeunload', e => {
+    if (processando || fila.length) { e.preventDefault(); e.returnValue = ''; }
+  });
+</script>
+</body>
+</html>

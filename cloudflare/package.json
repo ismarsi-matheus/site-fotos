@@ -1,0 +1,11 @@
+{
+  "name": "fotos-festa",
+  "private": true,
+  "scripts": {
+    "local": "wrangler d1 execute fotos-festa --local --file=schema.sql && wrangler dev",
+    "publicar": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.155.0"
+  }
+}

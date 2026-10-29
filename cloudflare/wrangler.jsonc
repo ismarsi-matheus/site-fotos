@@ -1,0 +1,13 @@
+{
+  "name": "fotos-festa",
+  "main": "src/index.js",
+  "compatibility_date": "2025-09-01",
+  "r2_buckets": [
+    { "binding": "FOTOS", "bucket_name": "fotos-festa" }
+  ],
+  "d1_databases": [
+    // Troque o database_id pelo que o comando "wrangler d1 create fotos-festa" mostrar (veja o LEIA-ME).
+    { "binding": "DB", "database_name": "fotos-festa", "database_id": "00000000-0000-0000-0000-000000000000" }
+  ],
+  "observability": { "enabled": true }
+}

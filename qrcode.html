@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plaquinha com QR code</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+<style>
+  main { max-width: 40rem; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+  .instrucao { color: var(--suave); }
+  .placa {
+    margin: 1.5rem auto; width: min(100%, 11cm); background: #fff; color: #2A1530;
+    padding: 1.4rem 1.4rem 1.2rem; border-radius: 6px; text-align: center;
+    box-shadow: 0 10px 30px rgba(42, 21, 48, .15);
+    border-top: 10px solid #C8174F;
+  }
+  .placa h1 { font-family: var(--fonte-titulo); font-weight: 400; font-size: 2.2rem; line-height: 1; margin: .2rem 0 .4rem; }
+  .placa .chamada { margin: 0 0 1rem; font-weight: 600; }
+  #qr { width: 65%; margin: 0 auto; }
+  #qr canvas, #qr img { width: 100% !important; height: auto !important; }
+  .passos { list-style: none; padding: 0; margin: 1.1rem 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; font-size: .85rem; line-height: 1.3; }
+  .passos b { display: block; font-family: var(--fonte-titulo); font-weight: 400; font-size: 1.3rem; color: #C8174F; }
+  .link { font-size: .75rem; color: #75596F; margin: .9rem 0 0; word-break: break-all; }
+  .acoes { display: flex; justify-content: center; }
+
+  @media print {
+    body { background: #fff; }
+    .nao-imprimir { display: none !important; }
+    main { padding: 0; }
+    .placa { box-shadow: none; border: 1px solid #ddd; border-top: 10px solid #C8174F; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="nao-imprimir">
+    <p class="instrucao">Esta é a plaquinha para colocar nas mesas. Antes de imprimir, confira se o link embaixo do QR code é o endereço publicado do site (ele vem do campo <code>linkDoSite</code> no config.js).</p>
+    <p class="acoes"><button class="botao" onclick="print()">Imprimir plaquinha</button></p>
+  </div>
+
+  <div class="placa">
+    <h1 id="titulo"></h1>
+    <p class="chamada">Tirou foto? Manda pra gente!</p>
+    <div id="qr"></div>
+    <ol class="passos">
+      <li><b>1</b>Aponte a câmera do celular</li>
+      <li><b>2</b>Toque no link que aparecer</li>
+      <li><b>3</b>Escolha as fotos e envie</li>
+    </ol>
+    <p class="link" id="link"></p>
+  </div>
+</main>
+
+<script src="config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="fotos.js"></script>
+<script>
+  const cfg = window.EVENTO;
+  document.getElementById('titulo').textContent = cfg.titulo;
+  const link = Fotos.linkDoSite();
+  document.getElementById('link').textContent = link;
+  if (window.QRCode) {
+    new QRCode(document.getElementById('qr'), {
+      text: link, width: 600, height: 600, colorDark: '#2A1530', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  }
+</script>
+</body>
+</html>

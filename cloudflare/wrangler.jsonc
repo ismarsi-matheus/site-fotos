@@ -7,7 +7,7 @@
   ],
   "d1_databases": [
     // Troque o database_id pelo que o comando "wrangler d1 create fotos-festa" mostrar (veja o LEIA-ME).
-    { "binding": "DB", "database_name": "fotos-festa", "database_id": "00000000-0000-0000-0000-000000000000" }
+    { "binding": "DB", "database_name": "fotos-festa", "database_id": "bd9f6f63-020a-4222-9879-b9541bdb1696" }
   ],
   "observability": { "enabled": true }
 }

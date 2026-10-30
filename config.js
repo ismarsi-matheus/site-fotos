@@ -15,7 +15,7 @@ window.EVENTO = {
   // Depois de publicar o site na Vercel, cole aqui o endereço da página dos convidados.
   // Exemplo: 'https://fotos-marina.vercel.app/'
   // Enquanto estiver vazio, o QR code aponta para o endereço atual do navegador.
-  linkDoSite: '',
+  linkDoSite: 'https://site-fotos-henna.vercel.app/',
 
   // Qualidade (veja o LEIA-ME). O ORIGINAL de cada foto é sempre guardado sem alteração;
   // estes números valem só para as versões de exibição.
